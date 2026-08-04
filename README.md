@@ -1,179 +1,55 @@
-## Ansible 2 - Savchenko Serafima
-
 # Task 1
+## Устанавливаем репо zabbix
+```
+wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu22.04_all.deb
+dpkg -i zabbix-release_latest_7.4+ubuntu22.04_all.deb
+apt update 
+```
 
-![motd.png](img/motd.png)
-![unarch.png](img/unarch.png)
-![tuned.png](img/tuned.png)
+## Устанавливаем postgres
+```
+sudo apt install postgresql postgresql-contrib -y
+```
 
----
+## Устанавливаем компоненты - сервер, агент, фронт 
+```
+apt install zabbix-server-pgsql zabbix-frontend-php php8.1-pgsql zabbix-apache-conf zabbix-sql-scripts zabbix-agent
+```
+## Создаем пользователя и БД
+```
+sudo -u postgres createuser --pwprompt zabbix
+
+enter <pass> 
+
+sudo -u postgres createdb -O zabbix zabbix
+```
+## Инициализируем схему БД
+```
+zcat /usr/share/zabbix/sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix 
+```
+
+## Добавляем пароль в конфиг сервера
+```
+sudo nano /etc/zabbix/zabbix_server.conf
+...
+DBPassword=<pass>
+```
+
+## Заходим http://<ip>/zabbix настраевам через мастер установки
 
 # Task 2
-
+## Устанавливаем репо zabbix
 ```
----
-- name: remote_motd
-  hosts: all
-  become: yes
-
-  tasks:
-    - name: custmo_motd
-      ansible.builtin.copy:
-        content: |
-          ==========================================
-          Хостнейм : {{ ansible_hostname }}
-          IP-адрес : {{ ansible_default_ipv4.address | default('Не определен') }}
-          Хорошего дня!
-          ==========================================
-        dest: /etc/motd
-        mode: '0644'
-        owner: root
-        group: root
-
-    - name: block_default_motd
-      ansible.builtin.file:
-        path: "/etc/update-motd.d/{{ item }}"
-        state: absent
-      loop:
-        - "10-help-text"
-        - "50-motd-news"
-        - "90-updates-available"
-        - "91-release-upgrade"
-        - "95-hwe-eol"
-        - "98-reboot-required"
-      ignore_errors: yes
-
+wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu22.04_all.deb
+dpkg -i zabbix-release_latest_7.4+ubuntu22.04_all.deb
+apt update 
 ```
-
----
-
-# Task 3
-
-playbook.yaml 
+# Устанавливаем агент
 ```
----
-- name: Apache
-  hosts: all
-  become: yes
-  roles:
-    - apache_webserver
-
+sudo apt install zabbix-agent -y
 ```
-
-roles/apache_webserver/handlers/main.yaml 
-
+# Меняем конфиг - указываем ip сервера zabbix
 ```
----
-- name: Restart Apache
-  ansible.builtin.service:
-    name: apache2
-    state: restarted
-```
-
-roles/apache_webserver/templates/custom_apache.conf.j2 
-```
-ServerTokens Prod
-ServerSignature Off
-Timeout 60
-```
-
-roles/apache_webserver/templates/idnex.html.j2 
-```
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Системная информация сервера</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f4f4f9; }
-        h1 { color: #333; }
-        table { border-collapse: collapse; width: 60%; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #007BFF; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-    </style>
-</head>
-<body>
-    <h1>Характеристики сервера</h1>
-    <table>
-        <tr>
-            <th>Параметр</th>
-            <th>Значение</th>
-        </tr>
-        <tr>
-            <td>IP-адрес</td>
-            <td>{{ ansible_default_ipv4.address }}</td>
-        </tr>
-        <tr>
-            <td>Процессор (CPU)</td>
-            <td>{{ ansible_processor_count }} физический(их), {{ ansible_processor_cores }} ядро(ер) на каждый</td>
-        </tr>
-        <tr>
-            <td>Оперативная память (RAM)</td>
-            <td>{{ (ansible_memtotal_mb / 1024) | round(2) }} ГБ</td>
-        </tr>
-        <tr>
-            <td>Объем HDD (раздел /)</td>
-            <td>
-                {% set root_mount = ansible_mounts | selectattr('mount', 'equalto', '/') | list | first %}
-                {{ (root_mount.size_total / 1073741824) | round(2) if root_mount else 'Не определено' }} ГБ
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-```
-
-roles/apache_webserver/tasks/main.yaml 
-```
----
-- name: install
-  ansible.builtin.apt:
-    name: apache2
-    state: present
-    update_cache: yes
-
-- name: config
-  ansible.builtin.template:
-    src: custom_apache.conf.j2
-    dest: /etc/apache2/conf-available/ansible-managed.conf
-  notify: Restart Apache
-
-- name: manage apache
-  ansible.builtin.file:
-    src: /etc/apache2/conf-available/ansible-managed.conf
-    dest: /etc/apache2/conf-enabled/ansible-managed.conf
-    state: link
-  notify: Restart Apache
-
-- name: index
-  ansible.builtin.template:
-    src: index.html.j2
-    dest: /var/www/html/index.html
-
-- name: enable apache
-  ansible.builtin.service:
-    name: apache2
-    state: started
-    enabled: yes
-
-- name: open port
-  ansible.builtin.iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: '80'
-    jump: ACCEPT
-    state: present
-
-- name: check
-  ansible.builtin.uri:
-    url: "http://{{ ansible_default_ipv4.address }}/"
-    status_code: 200
-  register: web_check
-  changed_when: false
-
-- name: result
-  ansible.builtin.debug:
-    msg: "Веб-сайт доступен! HTTP статус: {{ web_check.status }}"
+sudo nano /etc/zabbix/zabbix_agentd.conf
+Server=<ip>
 ```
