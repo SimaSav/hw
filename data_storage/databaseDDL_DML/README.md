@@ -6,7 +6,7 @@ Task 1
 ![task1](<./img/Screenshot2t1.png>)
 
 ![task1](<./img/Screenshot3t1.png>)
-
+```
 sudo docker run --name mysql-sakila -e MYSQL_ROOT_PASSWORD=root_password -p 3306:3306 -d mysql:8.0
 CREATE USER 'sys_temp'@'localhost' IDENTIFIED BY 'qwe123!@#';
 SELECT user, host FROM mysql.user;
@@ -19,13 +19,13 @@ sudo docker exec -i mysql-sakila mysql -usys_temp -pyour_password < sakila-schem
 sudo docker exec -i mysql-sakila mysql -usys_temp -pyour_password sakila < sakila-data.sql
 USE sakila;
 SHOW TABLES;
-
+```
 ---
 
 Task 2
 
 ![task2](<./img/t2.png>)
-
+```
 mysql> SELECT      table_name AS 'table',      column_name AS 'PRIMARY' FROM      information_schema.key_column_usage WHERE      table_schema = 'sakila'      AND constraint_name = 'PRIMARY' ORDER BY      table_name;
 +---------------+--------------+
 | table         | PRIMARY      |
@@ -51,3 +51,4 @@ mysql> SELECT      table_name AS 'table',      column_name AS 'PRIMARY' FROM    
 +---------------+--------------+
 18 rows in set (0.00 sec)
 
+```

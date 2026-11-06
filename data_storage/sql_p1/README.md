@@ -1,5 +1,5 @@
 Task 1
-
+```
 mysql> SELECT DISTINCT district  FROM address  WHERE district LIKE 'K%a'    AND district NOT LIKE '% %';
 +-----------+
 | district  |
@@ -13,11 +13,12 @@ mysql> SELECT DISTINCT district  FROM address  WHERE district LIKE 'K%a'    AND 
 | Kitaa     |
 +-----------+
 7 rows in set (0.00 sec)
+```
 
 ---
 
 Task 2
-
+```
 mysql> SELECT * 
     -> FROM payment 
     -> WHERE payment_date BETWEEN '2005-06-15 00:00:00' AND '2005-06-18 23:59:59' 
@@ -34,11 +35,12 @@ mysql> SELECT *
 |      15313 |         572 |        2 |      1889 |  10.99 | 2005-06-17 04:05:12 | 2006-02-15 22:22:22 |
 +------------+-------------+----------+-----------+--------+---------------------+---------------------+
 7 rows in set (0.01 sec)
+```
 
 ---
 
 Task 3
-
+```
 mysql> SELECT * 
     -> FROM rental 
     -> ORDER BY rental_date DESC 
@@ -53,11 +55,13 @@ mysql> SELECT *
 |     13486 | 2006-02-14 15:16:03 |         4460 |         274 | NULL        |        1 | 2006-02-15 21:30:53 |
 +-----------+---------------------+--------------+-------------+-------------+----------+---------------------+
 5 rows in set (0.00 sec)
+```
 
 ---
 
 Task 4
 
+```
 mysql> SELECT 
     ->     REPLACE(LOWER(first_name), 'll', 'pp') AS processed_first_name, 
     ->     LOWER(last_name) AS processed_last_name,
@@ -73,5 +77,7 @@ mysql> SELECT
 | wippie               | markham             |      1 |
 | keppy                | knott               |      1 |
 +----------------------+---------------------+--------+
+
 4 rows in set (0.00 sec)
+```
 
