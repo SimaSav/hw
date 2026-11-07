@@ -1,86 +1,58 @@
 ## Task 1
 ```
-mysql> SELECT DISTINCT district  FROM address  WHERE district LIKE 'K%a'    AND district NOT LIKE '% %';
-+-----------+
-| district  |
-+-----------+
-| Kanagawa  |
-| Kalmykia  |
-| Kaduna    |
-| Karnataka |
-| K�tahya   |
-| Kerala    |
-| Kitaa     |
-+-----------+
-7 rows in set (0.00 sec)
-
+mysql> SELECT 
+    ->     CONCAT(st.first_name, ' ', st.last_name) AS staff_name,
+    ->     c.city,
+    ->     COUNT(cu.customer_id) AS customer_count
+    -> FROM store s
+    -> JOIN staff st ON s.manager_staff_id = st.staff_id --  s.store_id = st.store_id
+    -> JOIN address a ON s.address_id = a.address_id
+    -> JOIN city c ON a.city_id = c.city_id
+    -> JOIN customer cu ON s.store_id = cu.store_id
+    -> GROUP BY s.store_id, st.first_name, st.last_name, c.city
+    -> HAVING COUNT(cu.customer_id) > 300;
++--------------+------------+----------------+
+| staff_name   | city       | customer_count |
++--------------+------------+----------------+
+| Mike Hillyer | Lethbridge |            326 |
++--------------+------------+----------------+
+1 row in set (0.01 sec)
 ```
-
 ---
 
 ## Task 2
+
 ```
-mysql> SELECT * 
-    -> FROM payment 
-    -> WHERE payment_date BETWEEN '2005-06-15 00:00:00' AND '2005-06-18 23:59:59' 
-    ->   AND amount > 10.00;
-+------------+-------------+----------+-----------+--------+---------------------+---------------------+
-| payment_id | customer_id | staff_id | rental_id | amount | payment_date        | last_update         |
-+------------+-------------+----------+-----------+--------+---------------------+---------------------+
-|        908 |          33 |        1 |      1301 |  10.99 | 2005-06-15 09:46:33 | 2006-02-15 22:12:36 |
-|       7017 |         260 |        1 |      2091 |  10.99 | 2005-06-17 18:09:04 | 2006-02-15 22:14:58 |
-|       8272 |         305 |        1 |      2166 |  11.99 | 2005-06-17 23:51:21 | 2006-02-15 22:15:47 |
-|      12888 |         477 |        1 |      2306 |  10.99 | 2005-06-18 08:33:23 | 2006-02-15 22:19:46 |
-|      13892 |         516 |        1 |      1718 |  10.99 | 2005-06-16 14:52:02 | 2006-02-15 22:20:47 |
-|      14620 |         544 |        2 |      1434 |  10.99 | 2005-06-15 18:30:46 | 2006-02-15 22:21:35 |
-|      15313 |         572 |        2 |      1889 |  10.99 | 2005-06-17 04:05:12 | 2006-02-15 22:22:22 |
-+------------+-------------+----------+-----------+--------+---------------------+---------------------+
-7 rows in set (0.01 sec)
+mysql> SELECT COUNT(*) AS film_count
+    -> FROM film
+    -> WHERE length > (SELECT AVG(length) FROM film);
++------------+
+| film_count |
++------------+
+|        489 |
++------------+
+1 row in set (0.00 sec)
+
 ```
 
 ---
-
 
 ## Task 3
-```
-mysql> SELECT * 
-    -> FROM rental 
-    -> ORDER BY rental_date DESC 
-    -> LIMIT 5;
-+-----------+---------------------+--------------+-------------+-------------+----------+---------------------+
-| rental_id | rental_date         | inventory_id | customer_id | return_date | staff_id | last_update         |
-+-----------+---------------------+--------------+-------------+-------------+----------+---------------------+
-|     11739 | 2006-02-14 15:16:03 |         4568 |         373 | NULL        |        2 | 2006-02-15 21:30:53 |
-|     14616 | 2006-02-14 15:16:03 |         4537 |         532 | NULL        |        1 | 2006-02-15 21:30:53 |
-|     11676 | 2006-02-14 15:16:03 |         4496 |         216 | NULL        |        2 | 2006-02-15 21:30:53 |
-|     15966 | 2006-02-14 15:16:03 |         4472 |         374 | NULL        |        1 | 2006-02-15 21:30:53 |
-|     13486 | 2006-02-14 15:16:03 |         4460 |         274 | NULL        |        1 | 2006-02-15 21:30:53 |
-+-----------+---------------------+--------------+-------------+-------------+----------+---------------------+
-5 rows in set (0.00 sec)
-
-```
-
----
-
-
-## Task 4
 
 ```
 mysql> SELECT 
-    ->     REPLACE(LOWER(first_name), 'll', 'pp') AS processed_first_name, 
-    ->     LOWER(last_name) AS processed_last_name,
-    ->     active
-    -> FROM customer 
-    -> WHERE active = 1 
-    ->   AND (first_name = 'Kelly' OR first_name = 'Willie');
-+----------------------+---------------------+--------+
-| processed_first_name | processed_last_name | active |
-+----------------------+---------------------+--------+
-| keppy                | torres              |      1 |
-| wippie               | howell              |      1 |
-| wippie               | markham             |      1 |
-| keppy                | knott               |      1 |
-+----------------------+---------------------+--------+
-4 rows in set (0.00 sec)
+    ->     DATE_FORMAT(p.payment_date, '%Y-%m') AS payment_month,
+    ->     SUM(p.amount) AS total_payments,
+    ->     COUNT(DISTINCT p.rental_id) AS rental_count
+    -> FROM payment p
+    -> GROUP BY DATE_FORMAT(p.payment_date, '%Y-%m')
+    -> ORDER BY total_payments DESC
+    -> LIMIT 1;
++---------------+----------------+--------------+
+| payment_month | total_payments | rental_count |
++---------------+----------------+--------------+
+| 2005-07       |       28368.91 |         6709 |
++---------------+----------------+--------------+
+1 row in set (0.03 sec)
 
 ```
